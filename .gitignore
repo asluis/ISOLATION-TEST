@@ -1,0 +1,11 @@
+# Ignore all class files
+*.class
+
+# Ignoring IDE files
+*.DS_Store
+*.idea
+*.vscode
+*.iml
+
+# Ignore generated files
+*.txt
