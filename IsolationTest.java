@@ -28,11 +28,11 @@ public class IsolationTest{
             System.out.println("\n-------Executing Transactions as READ COMMITTED-------");
             openConnection();
             createTable(conn1);
-            conn1.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+            conn2.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 
             // Start transactions for both connections
-            conn1.setAutoCommit(false);
-            conn2.setAutoCommit(false);
+             conn1.setAutoCommit(false);
+             conn2.setAutoCommit(false);
 
             // Insert a row into the UNREPEATABLE table using conn1
             String sql = "INSERT INTO UNREPEATABLE (data) VALUES (1)";
@@ -40,13 +40,7 @@ public class IsolationTest{
             System.out.println("conn1: inserted value 1");
 
             // Read the inserted row three times using conn2
-            String selectSql = "SELECT data FROM UNREPEATABLE";
-            rs = conn2.prepareStatement(selectSql).executeQuery();
-            while (rs.next()) {
-                int value = rs.getInt("data");
-                System.out.println("conn2: read value " + value);
-            }
-            rs.close();
+            readRow();
 
             // Update the row to have a new value using conn1
             String updateSql = "UPDATE UNREPEATABLE SET data = 2 WHERE data = 1";
@@ -54,24 +48,23 @@ public class IsolationTest{
             System.out.println("conn1: updated value to 2");
 
             // Read the updated row three times using conn2
-            rs = conn2.prepareStatement(selectSql).executeQuery();
-            while (rs.next()) {
-                int value = rs.getInt("data");
-                System.out.println("conn2: read value " + value);
-            }
-            rs.close();
+            readRow();
 
             // Delete the row using conn1
-            String deleteSql = "DELETE FROM UNREPEATABLE WHERE data = 2";
-            conn1.prepareStatement(deleteSql).executeUpdate();
-            System.out.println("conn1: deleted row");
+            String updateSql2 = "UPDATE UNREPEATABLE SET data = 3 WHERE data = 2";
+            conn1.prepareStatement(updateSql2).executeUpdate();
+            System.out.println("conn1: updated value to 3");
 
             // Commit transactions for both connections
             conn1.commit();
             conn2.commit();
-            closeConnection();
+
+            // Read the updated row three times using conn2
+            readRow();
+            closeConnection(); 
 
             System.out.println("\n-------Executing Transactions as SERIALIZABLE-------");
+
         } catch (SQLException e){
             System.out.println("SQLException: " + e.getMessage());
             System.out.println("SQLState: " + e.getSQLState());
@@ -93,6 +86,23 @@ public class IsolationTest{
             System.out.println("SQLState: " + e.getSQLState());
             System.out.println("VendorError: " + e.getErrorCode());
         }
+    }
+
+    private void readRow() {
+        try {
+            String selectSql = "SELECT * FROM UNREPEATABLE";
+            rs = conn2.prepareStatement(selectSql).executeQuery();
+            while (rs.next()) {
+                int value = rs.getInt("data");
+                System.out.println("conn2: read value " + value);
+            }
+            rs.close();
+        } catch (SQLException e){
+            System.out.println("SQLException: " + e.getMessage());
+            System.out.println("SQLState: " + e.getSQLState());
+            System.out.println("VendorError: " + e.getErrorCode());
+        }
+        
     }
 
     private void closeConnection() {
