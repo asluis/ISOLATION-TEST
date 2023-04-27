@@ -130,40 +130,6 @@ public class IsolationTest{
         }
     }
 
-    private void readRowFromConn2() {
-        try {
-            String selectSql = "SELECT * FROM UNREPEATABLE";
-            rs = conn2.prepareStatement(selectSql).executeQuery();
-            while (rs.next()) {
-                int value = rs.getInt("data");
-                System.out.println("conn2: read value " + value);
-            }
-            rs.close();
-        } catch (SQLException e){
-            System.out.println("SQLException: " + e.getMessage());
-            System.out.println("SQLState: " + e.getSQLState());
-            System.out.println("VendorError: " + e.getErrorCode());
-        }
-        
-    }
-
-    private void readRowFromConn1() {
-        try {
-            String selectSql = "SELECT * FROM UNREPEATABLE";
-            rs = conn1.prepareStatement(selectSql).executeQuery();
-            while (rs.next()) {
-                int value = rs.getInt("data");
-                System.out.println("conn2: read value " + value);
-            }
-            rs.close();
-        } catch (SQLException e){
-            System.out.println("SQLException: " + e.getMessage());
-            System.out.println("SQLState: " + e.getSQLState());
-            System.out.println("VendorError: " + e.getErrorCode());
-        }
-        
-    }
-
     private void readRow(Connection conn) {
         try {
             String selectSql = "SELECT * FROM UNREPEATABLE";
