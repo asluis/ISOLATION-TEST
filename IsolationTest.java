@@ -25,6 +25,7 @@ public class IsolationTest{
             openConnection();
             createTable(conn1);
             conn2.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+            System.out.println("Set READ COMMITTED for conn2 successfully");
 
             // Start transactions for both connections
              conn1.setAutoCommit(false);
@@ -36,7 +37,7 @@ public class IsolationTest{
             System.out.println("conn1: inserted value 1");
 
             // Read the inserted row three times using conn2
-            readRow(conn2);
+            readRow(conn2, "conn2");
 
             // Update the row to have a new value using conn1
             String updateSql = "UPDATE UNREPEATABLE SET data = 2 WHERE data = 1";
@@ -44,19 +45,21 @@ public class IsolationTest{
             System.out.println("conn1: updated value to 2");
 
             // Read the updated row three times using conn2
-            readRow(conn2);
+            readRow(conn2, "conn2");
 
-            // Delete the row using conn1
+            // update the row using conn1
             String updateSql2 = "UPDATE UNREPEATABLE SET data = 3 WHERE data = 2";
             conn1.prepareStatement(updateSql2).executeUpdate();
             System.out.println("conn1: updated value to 3");
 
-            // Commit transactions for both connections
+            // Commit transactions
             conn1.commit();
+            System.out.println("Commit Transaction 1");
             conn2.commit();
+            System.out.println("Commit Transaction 2");
 
             // Read the updated row three times using conn2
-            readRow(conn2);
+            readRow(conn2, "conn2");
             closeConnection(); 
 
             System.out.println("\n-------Executing Transactions as SERIALIZABLE-------");
@@ -75,7 +78,7 @@ public class IsolationTest{
             System.out.println("conn1: inserted value 1");
 
             // Read the inserted row three times using conn2
-            readRow(conn2);
+            readRow(conn2, "conn2");
 
             // Update the row to have a new value using conn2
             updateSql = "UPDATE UNREPEATABLE SET data = 2 WHERE data = 1";
@@ -85,7 +88,7 @@ public class IsolationTest{
             System.out.println("conn2: acquired lock and updated value to 2");
 
             // Read the updated row using conn1
-            readRow(conn1);
+            readRow(conn1, "conn1");
 
             // Try to update the row again using conn2, which will timeout waiting for the lock
             System.out.println("conn2: trying to acquire lock for second update");
@@ -96,14 +99,14 @@ public class IsolationTest{
             stmt2.close();
 
             // Read the updated row using conn1
-            readRow(conn1);
+            readRow(conn1, "conn1");
 
             // Commit transactions for both connections
             conn1.commit();
             conn2.commit();
 
             // Read the updated row using conn1
-            readRow(conn1);
+            readRow(conn1, "conn1");
 
             closeConnection(); 
 
@@ -130,13 +133,20 @@ public class IsolationTest{
         }
     }
 
-    private void readRow(Connection conn) {
+    private void readRow(Connection conn, String name) {
         try {
             String selectSql = "SELECT * FROM UNREPEATABLE";
+            //System.out.println("EXECUTE STATEMENT: " + selectSql);
             rs = conn.prepareStatement(selectSql).executeQuery();
+            
+            if (!rs.isBeforeFirst() && rs.getRow() == 0) {
+                System.out.print("READ ROW WITH " + name + " - ");
+                System.out.println("row is empty");
+            }
             while (rs.next()) {
                 int value = rs.getInt("data");
-                System.out.println("conn2: read value " + value);
+                System.out.print("READ ROW WITH " + name + " - ");
+                System.out.println("read value: " + value);
             }
             rs.close();
         } catch (SQLException e){
